@@ -78,7 +78,7 @@ public class BookingController {
     }
 
     /**
-     * Menyimpan tempahan baru ke dalam database MySQL
+     * Menyimpan tempahan baru ke dalam database MySQL (DIKEMASKINI: Ditukar ke 'name')
      */
     public Booking createBooking(Student student, String roomID, String date, String time) {
         if (!checkRoomAvailability(roomID, date, time)) {
@@ -87,11 +87,14 @@ public class BookingController {
         }
 
         Room room = findRoomById(roomID);
-        String query = "INSERT INTO bookings (student_id, student_name, room_id, booking_date, time_slot, status) VALUES (?, ?, ?, ?, ?, 'CONFIRMED')";
+        
+        // 🛠️ PERUBAHAN DI SINI: Menukar nama kolum student_id kepada name mengikut database baharu awak
+        String query = "INSERT INTO bookings (name, student_name, room_id, booking_date, time_slot, status) VALUES (?, ?, ?, ?, ?, 'CONFIRMED')";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             
+            // Menggunakan getId() dari Student (yang memegang matricNo) untuk disumbat ke kolum 'name' database
             stmt.setString(1, student.getStudentId());   
             stmt.setString(2, student.getStudentName()); 
             stmt.setString(3, roomID);
@@ -118,11 +121,13 @@ public class BookingController {
     }
 
     /**
-     * Mengambil semua sejarah tempahan untuk pelajar tertentu
+     * Mengambil semua sejarah tempahan untuk pelajar tertentu (DIKEMASKINI: Carian berasaskan 'name')
      */
     public List<Booking> getBookingsForStudent(Student student) {
         List<Booking> result = new ArrayList<>();
-        String query = "SELECT * FROM bookings WHERE student_id = ?";
+        
+        // 🛠️ PERUBAHAN DI SINI: Menukar klausa WHERE student_id kepada WHERE name
+        String query = "SELECT * FROM bookings WHERE name = ?";
         
         class RawBooking {
             int bookingId;
@@ -238,7 +243,6 @@ public class BookingController {
             stmt.setString(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    // MENGGUNAKAN FACTORY: Mengatasi isu abstract class Room
                     Room room = RoomFactory.createRoom(
                         rs.getString("room_type"),
                         rs.getString("room_id"),
